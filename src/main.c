@@ -86,7 +86,7 @@ bool initialize_window()
   }
 
   // load the image into memory using SDL_image library function
-  image = IMG_Load("resources/dvd_logo2.png");
+  image = IMG_Load("resources/dvd_logo.png");
   if (!image)
   {
     printf("error creating image\n");
