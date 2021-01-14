@@ -1,14 +1,16 @@
+#include <stdbool.h>
+#include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "./constants.h"
 
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
-SDL_Surface *surface = NULL;
+SDL_Surface *image = NULL;
 SDL_Texture *texture = NULL;
 SDL_Rect r;
 
-int quit = 0;
+bool quit = false;
 
 struct speed
 {
@@ -16,14 +18,21 @@ struct speed
   int y;
 } speed;
 
+struct background
+{
+  int r;
+  int g;
+  int b;
+} background;
+
 void setup();
 void update();
 void render();
 void cleanup();
 void process_input();
-int initialize_window();
+bool initialize_window();
 
-int main(void)
+int main(int argc, char *argv[])
 {
   quit = initialize_window();
 
@@ -42,13 +51,20 @@ int main(void)
   return 0;
 }
 
-int initialize_window()
+void destroy_window()
+{
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(window);
+  SDL_Quit();
+}
+
+bool initialize_window()
 {
   // attempt to initialize graphics and timer system
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
   {
     printf("error initializing SDL: %s\n", SDL_GetError());
-    return 1;
+    return true;
   }
 
   window = SDL_CreateWindow("DVD",
@@ -61,7 +77,7 @@ int initialize_window()
   {
     printf("error creating window: %s\n", SDL_GetError());
     SDL_Quit();
-    return 1;
+    return true;
   }
 
   Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
@@ -72,23 +88,21 @@ int initialize_window()
     printf("error creating renderer: %s\n", SDL_GetError());
     SDL_DestroyWindow(window);
     SDL_Quit();
-    return 1;
+    return true;
   }
 
   // load the image into memory using SDL_image library function
-  surface = IMG_Load("resources/logo.png");
-  if (!surface)
+  image = IMG_Load("resources/dvd_logo2.png");
+  if (!image)
   {
-    printf("error creating surface\n");
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 1;
+    printf("error creating image\n");
+    destroy_window();
+    return true;
   }
 
   // load the image data into the graphics hardware's memory
-  texture = SDL_CreateTextureFromSurface(renderer, surface);
-  SDL_FreeSurface(surface);
+  texture = SDL_CreateTextureFromSurface(renderer, image);
+  SDL_FreeSurface(image);
 
   // connects texture with r
   SDL_QueryTexture(texture, NULL, NULL, &r.w, &r.h);
@@ -96,17 +110,25 @@ int initialize_window()
   if (!texture)
   {
     printf("error creating texture: %s\n", SDL_GetError());
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 1;
+    destroy_window();
+    return true;
   }
 
-  return 0;
+  return false;
+}
+
+void set_background()
+{
+  background.r = rand() % 255;
+  background.g = rand() % 255;
+  background.b = rand() % 255;
 }
 
 void setup()
 {
+  // set background color
+  set_background();
+
   // set initial speed of object
   speed.x = 10;
   speed.y = 10;
@@ -127,12 +149,12 @@ void process_input()
   {
 
   case SDL_QUIT:
-    quit = 1;
+    quit = true;
     break;
   case SDL_KEYDOWN:
     if (event.key.keysym.sym == SDLK_ESCAPE)
     {
-      quit = 1;
+      quit = true;
     }
     break;
   }
@@ -147,11 +169,13 @@ void update()
   {
     speed.x = -speed.x;
     r.x = WINDOW_WIDTH - r.w;
+    set_background();
   }
   else if (r.x <= 0)
   {
     speed.x = -speed.x;
     r.x = 0;
+    set_background();
   }
 
   // bottom/upper boundary
@@ -159,11 +183,13 @@ void update()
   {
     speed.y = -speed.y;
     r.y = WINDOW_HEIGHT - r.h;
+    set_background();
   }
   else if (r.y <= 0)
   {
     speed.y = -speed.y;
     r.y = 0;
+    set_background();
   }
 
   // Make delay for 60 FPS
@@ -172,8 +198,8 @@ void update()
 
 void render()
 {
-  // Set background to white
-  SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+  // Set background to random color
+  SDL_SetRenderDrawColor(renderer, background.r, background.g, background.b, 0xFF);
 
   // Clears the window
   SDL_RenderClear(renderer);
