@@ -64,8 +64,9 @@ int initialize_window()
     return 1;
   }
 
+  Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
   // create a renderer, which sets up the graphics hardware
-  renderer = SDL_CreateRenderer(window, -1, 0);
+  renderer = SDL_CreateRenderer(window, -1, render_flags);
   if (!renderer)
   {
     printf("error creating renderer: %s\n", SDL_GetError());
