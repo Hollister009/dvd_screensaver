@@ -1,1 +1,5 @@
 .vscode/
+.DS_Store
+*.o
+demo
+Makefile
