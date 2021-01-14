@@ -11,19 +11,13 @@ SDL_Texture *texture = NULL;
 SDL_Rect r;
 
 bool quit = false;
+int last_frame_time = 0;
 
 struct speed
 {
   int x;
   int y;
 } speed;
-
-struct background
-{
-  int r;
-  int g;
-  int b;
-} background;
 
 void setup();
 void update();
@@ -117,21 +111,20 @@ bool initialize_window()
   return false;
 }
 
-void set_background()
+void set_texture_color()
 {
-  background.r = rand() % 255;
-  background.g = rand() % 255;
-  background.b = rand() % 255;
+  int r = rand() % 255;
+  int g = rand() % 255;
+  int b = rand() % 255;
+  // Modulate texture
+  SDL_SetTextureColorMod(texture, r, g, b);
 }
 
 void setup()
 {
-  // set background color
-  set_background();
-
   // set initial speed of object
-  speed.x = 10;
-  speed.y = 10;
+  speed.x = 2;
+  speed.y = 2;
 
   // sets initial x-position of object
   r.x = (WINDOW_WIDTH - r.w) / 2;
@@ -162,6 +155,17 @@ void process_input()
 
 void update()
 {
+  // Sleep the execution until we reach the target frame time in milliseconds
+  int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - last_frame_time);
+
+  // Only call delay if we are too fast too process this frame
+  if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
+  {
+    SDL_Delay(time_to_wait);
+  }
+
+  last_frame_time = SDL_GetTicks();
+
   r.x += speed.x;
   r.y += speed.y;
 
@@ -169,13 +173,13 @@ void update()
   {
     speed.x = -speed.x;
     r.x = WINDOW_WIDTH - r.w;
-    set_background();
+    set_texture_color();
   }
   else if (r.x <= 0)
   {
     speed.x = -speed.x;
     r.x = 0;
-    set_background();
+    set_texture_color();
   }
 
   // bottom/upper boundary
@@ -183,23 +187,20 @@ void update()
   {
     speed.y = -speed.y;
     r.y = WINDOW_HEIGHT - r.h;
-    set_background();
+    set_texture_color();
   }
   else if (r.y <= 0)
   {
     speed.y = -speed.y;
     r.y = 0;
-    set_background();
+    set_texture_color();
   }
-
-  // Make delay for 60 FPS
-  SDL_Delay(1000 / 60);
 }
 
 void render()
 {
-  // Set background to random color
-  SDL_SetRenderDrawColor(renderer, background.r, background.g, background.b, 0xFF);
+  // Set background to black color
+  SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
 
   // Clears the window
   SDL_RenderClear(renderer);
